@@ -1,0 +1,23 @@
+[project]
+name = "kry"
+version = "0.1.0"
+description = "Cryptography project"
+authors = [
+    {name = "BorekZnovustvoritel", email = "73165420+BorekZnovustvoritel@users.noreply.github.com"},
+]
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.1",
+    "python-multipart>=0.0.9",
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
