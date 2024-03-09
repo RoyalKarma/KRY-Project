@@ -7,4 +7,3 @@ sender_db = "sender.db"
 sender_certs = "sender_certs"
 receiver_db = "receiver.db"
 receiver_certs = "receiver_certs"
-

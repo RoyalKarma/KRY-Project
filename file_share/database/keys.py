@@ -9,4 +9,3 @@ class Keys(Base):
 
     username: Mapped[str] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(length=api_key_length_bytes))
-
