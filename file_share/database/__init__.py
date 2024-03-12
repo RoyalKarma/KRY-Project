@@ -26,6 +26,7 @@ class Database:
             self.session.merge(Users(name=name, cert_file=data))
             self.session.commit()
 
+    # Retrieval of user certificates
     def get_ca_data(self) -> str:
         """Works with PEM format only."""
         rows = self.session.query(Users).all()
@@ -35,6 +36,7 @@ class Database:
             data += b"\n"
         return data.decode()
 
+    # Functions for API keys management
     def pop_key(self, key: str) -> str:
         row = self.session.query(Keys).filter_by(key=key).one_or_none()
         if not row:
