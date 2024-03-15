@@ -6,6 +6,6 @@ from ..definitions import api_key_length_bytes
 
 class Keys(Base):
     __tablename__ = "keys"
-
+    # Storage of users and their one use API keys
     username: Mapped[str] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(length=api_key_length_bytes))

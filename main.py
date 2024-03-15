@@ -14,6 +14,7 @@ from file_share.definitions import (
 )
 
 if __name__ == "__main__":
+    # Checking if certs exist if not they are generated
     Path(sender_certs).mkdir(exist_ok=True)
     Path(receiver_certs).mkdir(exist_ok=True)
     if not (Path(sender_certs) / "rsa.crt").exists():
@@ -56,6 +57,7 @@ if __name__ == "__main__":
             ]
         )
 
+    # Creating dbs for sender and reciever and adding certs of the other part
     sender_database = Database(sender_db)
     sender_database.add_user(receiver_certs + "/rsa.crt")
     receiver_database = Database(receiver_db)
