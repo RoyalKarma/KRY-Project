@@ -1,6 +1,7 @@
 import base64
 from pathlib import Path
 
+from starlette.requests import Request
 from fastapi import FastAPI, UploadFile, Depends, HTTPException
 from fastapi.security import APIKeyHeader
 from file_share.database import Database
@@ -8,19 +9,21 @@ from file_share.database.users import Users
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
+from file_share.definitions.dataclasses import Certificate
 from file_share.receiver.api_keys import generate_api_key
-from file_share.definitions import dir_to_save, receiver_db
+from file_share.definitions import dir_to_save, db
 
-database = Database(receiver_db)
+database = Database(db)
 app = FastAPI(name="FileShare")
 header_scheme = APIKeyHeader(name="x-key", auto_error=True)
 
 
 @app.post("/file")
-async def upload_file(file: UploadFile, api_key: str = Depends(header_scheme)):
+async def upload_file(request: Request, file: UploadFile, api_key: str = Depends(header_scheme)):
     """Authentication of sender
 
     Args:
+        request: ASGI request
         file (FastAPI UploadFile object): Transfered file
         api_key (str): Senders API key
     Returns:
@@ -47,11 +50,11 @@ async def auth(name: str):
     Returns:
         base64 encoded API key
     """
-    # Check if the user in in database, if not raise an exception and terminate communication
-    row = database.session.query(Users).filter_by(name=name).one_or_none() 
+    # Check if the user is in database, if not raise an exception and terminate communication
+    row = database.get_user(name)
     if not row:
         raise HTTPException(401, "Do not talk to me or my son ever again.")
-    #Load certificate from memory and get senders public key
+    # Load certificate from memory and get senders public key
     certificate = x509.load_pem_x509_certificate(row.cert_file)
     pk = certificate.public_key()
     # API key generation and encryption with senders public key
@@ -60,3 +63,14 @@ async def auth(name: str):
     encrypted = pk.encrypt(api_key.encode(), PKCS1v15())
 
     return base64.b64encode(encrypted)
+
+
+@app.post("/friends")
+async def friends(file: UploadFile, request: Request):
+    try:
+        data = await file.read()
+        certificate = Certificate(data)
+    except:
+        raise HTTPException(400, "Send PEM-encoded certificate, not trash.")
+    database.add_user(certificate, request.client.host)
+    return "I will consider your request."
