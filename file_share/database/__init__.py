@@ -1,12 +1,11 @@
-from pathlib import Path
-from typing import Union, Optional
-from cryptography import x509
+from typing import Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from .base import Base
 from .keys import Keys
 from .users import Users
+from ..definitions import debug
 from ..definitions.dataclasses import Certificate
 
 
@@ -19,7 +18,9 @@ class Database:
     def session(self):
         return Session(self.engine)
 
-    def add_user(self, cert: Certificate, address: Optional[str] = None, as_friend: bool = False) -> bool:
+    def add_user(
+        self, cert: Certificate, address: Optional[str] = None, as_friend: bool = False
+    ) -> bool:
         """
         If the username was not previously known, return True and save it to the DB.
         Fail and return False otherwise.
@@ -47,12 +48,18 @@ class Database:
         session.commit()
         return True
 
-    def get_user(self, username: str, only_friends: bool = True) -> Optional[Users]:
+    def get_user(
+        self, username: str, only_friends: bool = not debug
+    ) -> Optional[Users]:
         session = self.session
         params = {"name": username}
         if only_friends:
             params["is_friend"] = True
-        user = session.query(Users).filter_by(**params).one_or_none()
+        user = (
+            session.query(Users.name, Users.cert_file, Users.address, Users.is_friend)
+            .filter_by(**params)
+            .one_or_none()
+        )
         session.commit()
         return user
 

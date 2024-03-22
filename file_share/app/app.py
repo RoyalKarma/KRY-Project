@@ -1,6 +1,4 @@
-import asyncio
 from typing import Any
-import threading
 
 from file_share.database import Database
 from file_share.friend_finder.ping_em import StoppablePingClient, StoppableUDPServer
@@ -31,6 +29,3 @@ class FileShareApp:
     def stop(self):
         for thread in self.threads:
             thread.stop()
-
-
-

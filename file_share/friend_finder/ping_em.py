@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import socket
 import ssl
 
@@ -22,7 +21,7 @@ class StoppableUDPServer(StoppableThread):
         soc.bind((get_local_ip(), PORT))
         while not self._stop_event.is_set():
             message, address = soc.recvfrom(1024)
-            address = address[0]    # get only IP, ignore port
+            address = address[0]  # get only IP, ignore port
             json_message = json.loads(message.decode())
             if json_message["proto"] != "file_share":
                 continue
@@ -31,7 +30,9 @@ class StoppableUDPServer(StoppableThread):
                 # Already know user
                 continue
             await send_cert(address)
-            self.database.add_user(Certificate(ssl.get_server_certificate((address, PORT)).encode()))
+            self.database.add_user(
+                Certificate(ssl.get_server_certificate((address, PORT)).encode())
+            )
 
     def run(self):
         asyncio.run(self._udp_server())

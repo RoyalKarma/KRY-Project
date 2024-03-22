@@ -2,7 +2,7 @@ import ssl
 from ssl import SSLContext
 from typing import Optional
 
-from file_share.database import Database, Users
+from file_share.database import Database
 from file_share.definitions import db
 
 db_connection = Database(db)
@@ -16,7 +16,7 @@ def get_ssl_context(username: str) -> Optional[SSLContext]:
     context = SSLContext()
     context.verify_mode = ssl.VerifyMode.CERT_REQUIRED
     if row.cert_file:
-        context.load_verify_locations(cadata=row.cert_file)
+        context.load_verify_locations(cadata=row.cert_file.decode())
     return context
 
 

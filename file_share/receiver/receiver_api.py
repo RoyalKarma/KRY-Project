@@ -5,7 +5,6 @@ from starlette.requests import Request
 from fastapi import FastAPI, UploadFile, Depends, HTTPException
 from fastapi.security import APIKeyHeader
 from file_share.database import Database
-from file_share.database.users import Users
 from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
@@ -19,7 +18,7 @@ header_scheme = APIKeyHeader(name="x-key", auto_error=True)
 
 
 @app.post("/file")
-async def upload_file(request: Request, file: UploadFile, api_key: str = Depends(header_scheme)):
+async def upload_file(file: UploadFile, api_key: str = Depends(header_scheme)):
     """Authentication of sender
 
     Args:

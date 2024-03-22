@@ -19,6 +19,7 @@ class Certificate:
         cert: cryptography.x509.Certificate object
         name: username, read from the CN field
     """
+
     def __init__(self, cert: Union[str, Path, bytes]):
         self.data: bytes
         self.cert: x509.Certificate
@@ -37,6 +38,7 @@ class Certificate:
             if attr.rfc4514_attribute_name == "CN":
                 self.name = attr.value
                 break
+
 
 class StoppableThread(threading.Thread):
     """Thread class with a stop() method. The thread itself has to check

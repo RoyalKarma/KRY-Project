@@ -1,4 +1,3 @@
-import os
 import socket
 
 from file_share.definitions import debug
@@ -10,5 +9,5 @@ def get_local_ip() -> str:
         return "127.0.0.1"
     # Create UDP socket for internet connection
     soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    soc.connect(('8.8.8.8', 1))  # connect() for UDP doesn't send packets
+    soc.connect(("8.8.8.8", 1))  # connect() for UDP doesn't send packets
     return soc.getsockname()[0]
