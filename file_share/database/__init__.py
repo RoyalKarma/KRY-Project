@@ -47,6 +47,17 @@ class Database:
         session.commit()
         return True
 
+    def get_all_users(self, friends: bool = True):
+        """
+        Get nicknames of all known users.
+        Args:
+            friends (bool): filter the users
+        """
+        session = self.session
+        ans = session.query(Users.name).filter_by(is_friend=friends).all()
+        session.commit()
+        return [x.name for x in ans]
+
     def befriend(self, username: str) -> bool:
         """Return True if user is known and is not a friend already."""
         session = self.session

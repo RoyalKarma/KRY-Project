@@ -8,7 +8,6 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
 from file_share.definitions.dataclasses import DecryptedFile, StoppableThread
-from file_share.definitions.procedures import load_file
 from file_share.sender.ssl_context import (
     get_ssl_context,
     get_user_address,
@@ -16,9 +15,6 @@ from file_share.sender.ssl_context import (
 )
 from file_share.definitions import my_username, PORT, certs_dir
 from file_share.database import Database
-
-
-db_connection = Database()
 
 
 async def send_cert(address: str):
@@ -56,7 +52,7 @@ async def is_active(username: str, address: Optional[str] = None) -> bool:
         return False
 
 
-async def send_all_from_queue(token: bytes):
+async def send_all_from_queue(token: bytes, db_connection: Database):
     queue = db_connection.get_all_files(False)
     for file in queue:
         username = file.username
@@ -65,7 +61,7 @@ async def send_all_from_queue(token: bytes):
             continue
         file_to_send = db_connection.decrypt_file(file.idx, token)
         try:
-            success = await send_file(file_to_send, address)
+            success = await send_file(file_to_send)
             if success:
                 db_connection.remove_file_from_queue(file.idx)
         except Exception as e:
@@ -73,18 +69,16 @@ async def send_all_from_queue(token: bytes):
             continue
 
 
-async def send_file(file: DecryptedFile, ip_addr: Optional[str] = None) -> bool:
+async def send_file(file: DecryptedFile) -> bool:
     """File sending
 
     Args:
         file (DecryptedFile): Path to the file which is to be sent
-        ip_addr (Optional[str]): Address of the receiver (override data  from db)
-
     Returns:
         None
     """
     username = file.username
-    address = ip_addr or get_user_address(username)
+    address = file.override_address or get_user_address(username)
     if not address:
         raise ValueError("I do not know a way to that person.")
     context = get_ssl_context(username)
@@ -124,14 +118,14 @@ async def send_file(file: DecryptedFile, ip_addr: Optional[str] = None) -> bool:
 
 
 async def send_or_store_file(
-    token: bytes, file: DecryptedFile, ip_addr: Optional[str] = None
+    token: bytes, file: DecryptedFile, db_connection: Database
 ):
-    if not await is_active(file.username, ip_addr):
+    if not await is_active(file.username, file.override_address):
         db_connection.store_file(file, token)
         print("User inactive, storing file to queue.")
         return False
     try:
-        return await send_file(file, ip_addr)
+        return await send_file(file)
     except Exception as e:
         print("Uh oh", e)
         db_connection.store_file(file, token)
@@ -141,6 +135,7 @@ async def send_or_store_file(
 class StoppableQueueSender(StoppableThread):
     def __init__(self, token: bytes, *args, **kwargs):
         self.token = token
+        self.database: Database = Database()
         super().__init__(*args, **kwargs)
 
     def run(self):
@@ -149,8 +144,4 @@ class StoppableQueueSender(StoppableThread):
     async def _periodic_queue_search(self):
         while not self._stop_event.is_set():
             await asyncio.sleep(15)
-            await send_all_from_queue(self.token)
-
-
-if __name__ == "__main__":
-    asyncio.run(send_or_store_file(b"pies", load_file("testfile.txt", "alice")))
+            await send_all_from_queue(self.token, self.database)

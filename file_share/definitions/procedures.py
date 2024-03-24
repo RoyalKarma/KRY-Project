@@ -1,7 +1,7 @@
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 from cryptography.fernet import Fernet
 from hashlib import sha256
@@ -28,7 +28,19 @@ def decrypt(data: bytes, token: bytes, seed: bytes) -> bytes:
     return decryption_factory.decrypt(data)
 
 
-def load_file(path: Union[str, Path], send_to: str) -> DecryptedFile:
+def load_file(
+    path: Union[str, Path], send_to: str, override_address: Optional[str] = None
+) -> DecryptedFile:
+    """
+    Load file from filesystem and prepare it for sending by
+    wrapping it in DecryptedFile object.
+
+    Args:
+        path (Union[str, Path]): path to file that needs to be loaded
+        send_to (str): peer to receive the file
+        override_address (str): IP address if we want to specify it explicitly
+            and not just count on the DB
+    """
     if isinstance(path, str):
         path = Path(path)
     with open(path, "rb") as infile:
@@ -39,6 +51,7 @@ def load_file(path: Union[str, Path], send_to: str) -> DecryptedFile:
         timestamp=datetime.now(),
         filename=path.name,
         data=data,
+        override_address=override_address,
     )
 
 

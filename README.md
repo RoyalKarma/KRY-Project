@@ -15,4 +15,11 @@ pdm install
 python3 main.py
 ```
 
-Visit [Swagger](http://localhost:42069/docs).
+Visit [Swagger](https://localhost:42069/docs).
+
+In another window, run:
+
+```bash
+source .venv/bin/activate
+python3 file_share/app/test_send_file.py
+```

@@ -33,7 +33,7 @@ class API:
         """Authentication of sender
 
         Args:
-            file (FastAPI UploadFile object): Transfered file
+            file (FastAPI UploadFile object): Transferred file
             api_key (str): Senders API key
         Returns:
             (str): Name of the save file
