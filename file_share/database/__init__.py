@@ -7,10 +7,16 @@ from secrets import token_bytes
 from .base import Base
 from .files import Files
 from .keys import Keys
+from .me import Me
 from .users import Users
 from ..definitions import debug
 from ..definitions.dataclasses import Certificate, DecryptedFile
-from file_share.definitions.procedures import encrypt, decrypt
+from file_share.definitions.procedures import (
+    encrypt,
+    decrypt,
+    compute_token,
+    get_token_hash,
+)
 
 
 class Database:
@@ -156,3 +162,33 @@ class Database:
         session.delete(file)
         session.commit()
         return True
+
+    def get_me(self) -> Optional[Me]:
+        session = self.session
+        me = session.query(Me.username, Me.password_salt, Me.token_hash).one_or_none()
+        session.commit()
+        return me
+
+    def add_me(self, name: str, password: str) -> bool:
+        me = self.get_me()
+        if me:
+            return False
+        seed = token_bytes(32)
+        me = Me(
+            username=name,
+            password_salt=seed,
+            token_hash=get_token_hash(compute_token(password, seed)),
+        )
+        session = self.session
+        session.add(me)
+        session.commit()
+        return True
+
+    def get_token(self, password: str) -> bytes:
+        me = self.get_me()
+        if not me:
+            raise ValueError("App is not instantiated!")
+        token = compute_token(password, me.password_salt)
+        if get_token_hash(token) != me.token_hash:
+            raise ValueError("Invalid password!")
+        return token
