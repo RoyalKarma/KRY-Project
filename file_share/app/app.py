@@ -15,7 +15,7 @@ class FileShareApp:
         self.database = Database()
 
     def start(self):
-        thread = StoppableUvicorn(daemon=True)
+        thread = StoppableUvicorn(self.token, daemon=True)
         self.threads.append(thread)
         thread.start()
         thread = StoppableQueueSender(self.token, daemon=True)
