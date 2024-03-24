@@ -1,5 +1,5 @@
 PORT = 42069
-username = "alice"
+my_username = "alice"
 dir_to_save = "/tmp"
 api_key_length_bytes = 32
 db = "sqlite.db"

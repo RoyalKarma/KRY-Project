@@ -1,5 +1,6 @@
+import datetime
 import threading
-from typing import Union
+from typing import Union, Optional
 from pathlib import Path
 from cryptography import x509
 
@@ -53,3 +54,30 @@ class StoppableThread(threading.Thread):
 
     def stopped(self):
         return self._stop_event.is_set()
+
+
+class DecryptedFile:
+    def __init__(
+        self,
+        username: str,
+        incoming: bool,
+        timestamp: datetime.datetime,
+        filename: str,
+        data: bytes,
+        override_address: Optional[str] = None,
+    ):
+        self.username: str = username
+        self.incoming: bool = incoming
+        self.timestamp: datetime.datetime = timestamp
+        self.filename: str = filename
+        self.data: bytes = data
+        self.override_address: Optional[str] = override_address
+
+    def save(self, path: Union[str, Path]):
+        """Save the file to filesystem."""
+        if isinstance(path, str):
+            path = Path(path)
+        if path.is_dir():
+            path = path / self.filename
+        with open(path, "wb") as outfile:
+            outfile.write(self.data)

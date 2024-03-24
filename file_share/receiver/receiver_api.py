@@ -73,3 +73,8 @@ async def friends(file: UploadFile, request: Request):
         raise HTTPException(400, "Send PEM-encoded certificate, not trash.")
     database.add_user(certificate, request.client.host)
     return "I will consider your request."
+
+
+@app.post("/ping")
+async def ping():
+    return "pong"

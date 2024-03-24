@@ -4,6 +4,7 @@ from file_share.database import Database
 from file_share.friend_finder.ping_em import StoppablePingClient, StoppableUDPServer
 from file_share.definitions.dataclasses import StoppableThread
 from file_share.receiver import StoppableUvicorn
+from file_share.sender.sender import StoppableQueueSender
 
 
 class FileShareApp:
@@ -15,6 +16,9 @@ class FileShareApp:
 
     def start(self):
         thread = StoppableUvicorn(daemon=True)
+        self.threads.append(thread)
+        thread.start()
+        thread = StoppableQueueSender(self.token, daemon=True)
         self.threads.append(thread)
         thread.start()
         if self.config.get("visible", False):

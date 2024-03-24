@@ -2,11 +2,15 @@ from typing import Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from secrets import token_bytes
+
 from .base import Base
+from .files import Files
 from .keys import Keys
 from .users import Users
 from ..definitions import debug
-from ..definitions.dataclasses import Certificate
+from ..definitions.dataclasses import Certificate, DecryptedFile
+from file_share.definitions.procedures import encrypt, decrypt
 
 
 class Database:
@@ -90,3 +94,65 @@ class Database:
         session = self.session
         session.merge(Keys(username=username, key=key))
         session.commit()
+
+    def store_file(self, file: DecryptedFile, token: bytes) -> int:
+        seed = token_bytes(32)
+        encrypted_data = encrypt(file.data, token, seed)
+        session = self.session
+        db_object = Files(
+            username=file.username,
+            incoming=file.incoming,
+            timestamp=file.timestamp,
+            filename=file.filename,
+            encrypted_data=encrypted_data,
+            salt=seed,
+            override_address=file.override_address,
+        )
+        session.add(db_object)
+        ret_idx = db_object.idx
+        session.commit()
+        return ret_idx
+
+    def decrypt_file(self, idx: int, token: bytes) -> Optional[DecryptedFile]:
+        session = self.session
+        file = session.query(Files).filter_by(idx=idx).one_or_none()
+        if not file:
+            session.commit()
+            return None
+        data = decrypt(file.encrypted_data, token, file.salt)
+        decrypted_file = DecryptedFile(
+            file.username,
+            file.incoming,
+            file.timestamp,
+            file.filename,
+            data,
+            file.override_address,
+        )
+        session.commit()
+        return decrypted_file
+
+    def get_all_files(self, incoming: bool) -> list[Files]:
+        session = self.session
+        res = (
+            session.query(
+                Files.idx,
+                Files.username,
+                Files.timestamp,
+                Files.incoming,
+                Files.override_address,
+            )
+            .filter_by(incoming=incoming)
+            .all()
+        )
+        session.commit()
+        return res
+
+    def remove_file_from_queue(self, idx: int) -> bool:
+        session = self.session
+        file = session.query(Files).filter_by(idx=idx).one_or_none()
+        if not file:
+            session.commit()
+            return False
+        session.delete(file)
+        session.commit()
+        return True
