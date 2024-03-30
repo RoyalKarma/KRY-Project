@@ -2,6 +2,10 @@ import asyncio
 import ssl
 from pathlib import Path
 from typing import Any, Union, Optional
+from tkinter import *
+from tkinter import filedialog as fd
+
+from file_share.definitions.procedures import load_file
 
 from file_share.database import Database, Files
 from file_share.definitions import PORT
@@ -13,6 +17,7 @@ from file_share.definitions.dataclasses import (
 )
 from file_share.receiver import StoppableUvicorn
 from file_share.sender.sender import StoppableQueueSender, send_or_store_file, send_cert
+ 
 
 
 class FileShareApp:
@@ -27,9 +32,73 @@ class FileShareApp:
         self.config: dict[str, Any] = config
         self.threads: list[StoppableThread] = []
         self.database = Database()
+        self.file_path = ''
+
+
+    #Helper methods for Tkinter
+    def getfile(self, app_window):
+        self.file_path = fd.askopenfilename()
+        file_label = Label(app_window,text = self.file_path)
+        file_label.pack()
+
+    def listfriends(self):
+        top = Tk()
+        Lb1 = Listbox(top)
+        friends = self.list_friends()
+        print(friends)
+        i=0
+        for friend in friends:
+            Lb1.insert(i,friend)
+            i+=1
+        Lb1.pack()
+        top.mainloop()
+
+    def prepfile(self, file_path,target):
+        return load_file(file_path,target)
+    
+    def listoutgoing(self):
+        top = Tk()
+        Lb2 = Listbox(top)
+        files = self.list_outgoing_queue()
+        print(files)
+        i=0
+        for file in files:
+            Lb2.insert(i,file)
+            i+=1
+
+        selected_file_index = Lb2.index(ACTIVE)
+
+        selected_file= files[selected_file_index]
+        path_to_save = fd.askdirectory()
+        print(path_to_save)
+
+        save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file, path_to_save))
+        save_incoming.pack()
+        Lb2.pack()
+
+        top.mainloop()
+    
+    def listincoming(self):
+        top = Tk()
+        Lb3 = Listbox(top, selectmode=SINGLE)
+        Lb3.pack()
+
+        files = self.list_incoming_queue()
+        print(files)
+        i=0
+        for file in files:
+            Lb3.insert(i,file)
+            i+=1
+        
+        selected_file = Lb3.get(ACTIVE)
+        save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file))
+        save_incoming.pack()
+        top.mainloop()
+
 
     def start(self):
         """Start the application."""
+        print("APP HAS STARTED")
         thread = StoppableUvicorn(self.token, daemon=True)
         self.threads.append(thread)
         thread.start()
@@ -44,6 +113,39 @@ class FileShareApp:
             thread = StoppablePingClient(daemon=True)
             self.threads.append(thread)
             thread.start()
+        # init main window
+        app_window = Tk()
+
+        #Choose a file 
+        open_file = Button(app_window, text="pick file", command=lambda:self.getfile(app_window))
+        open_file.pack()
+        #List friends usernames
+        list_friends = Button(app_window, text='List friends', command=lambda:self.listfriends())
+        list_friends.pack()
+
+        #Choose target for file sending
+        target_entry = Entry(app_window)
+        target= target_entry.get()
+        target_entry.pack()
+
+        #Send file  
+        send_file = Button(app_window, text='send file', command=lambda:self.send_sync(self.prepfile(self.file_path,target)))
+        send_file.pack()
+
+        #Show outbound queue
+        show_outbound = Button(app_window, text='List outgoing queue', command=lambda:self.listoutgoing())
+        show_outbound.pack()
+
+        #SHow inbound quue
+        show_inbound = Button(app_window, text='List incoming queue', command=lambda:self.listincoming())
+        show_inbound.pack()
+
+        #Save file from queuq
+
+
+        
+        
+        app_window.mainloop()
 
     def stop(self):
         for thread in self.threads:
@@ -116,3 +218,4 @@ class FileShareApp:
             return cert.name
         except:
             return None
+    
