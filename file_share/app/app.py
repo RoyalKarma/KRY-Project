@@ -7,6 +7,8 @@ from tkinter import filedialog as fd
 
 from file_share.definitions.procedures import load_file
 
+import re
+
 from file_share.database import Database, Files
 from file_share.definitions import PORT
 from file_share.friend_finder.ping_em import StoppablePingClient, StoppableUDPServer
@@ -56,44 +58,47 @@ class FileShareApp:
     def prepfile(self, file_path,target):
         return load_file(file_path,target)
     
+    def getselectedfile(self,Lb2):
+        get_selected_file = Lb2.get(ACTIVE)
+        selected_file_index = re.search("\d+", get_selected_file).group(0)
+        print("Index selected:", selected_file_index)
+        files = self.list_outgoing_queue()
+        for file in files:
+            if int(file.idx) == int(selected_file_index):
+                return file
+    
     def listoutgoing(self):
         top = Tk()
         Lb2 = Listbox(top)
         files = self.list_outgoing_queue()
-        print(files)
-        i=0
         for file in files:
-            Lb2.insert(i,file)
-            i+=1
+            Lb2.insert(file.idx,file)
 
-        selected_file_index = Lb2.index(ACTIVE)
-
-        selected_file= files[selected_file_index]
         path_to_save = fd.askdirectory()
-        print(path_to_save)
 
-        save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file, path_to_save))
+        save_incoming= Button(top, text='save selected file', command=lambda:[self.save_file_from_queue(self.getselectedfile(Lb2), path_to_save)])
         save_incoming.pack()
         Lb2.pack()
 
         top.mainloop()
     
-    def listincoming(self):
-        top = Tk()
-        Lb3 = Listbox(top, selectmode=SINGLE)
-        Lb3.pack()
-
-        files = self.list_incoming_queue()
-        print(files)
-        i=0
-        for file in files:
-            Lb3.insert(i,file)
-            i+=1
-        
-        selected_file = Lb3.get(ACTIVE)
-        save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file))
-        save_incoming.pack()
-        top.mainloop()
+    # def listincoming(self):
+    #    top = Tk()
+    #    Lb3 = Listbox(top, selectmode=SINGLE)
+    #    Lb3.pack()
+    #
+    #    files = self.list_incoming_queue()
+    #    
+    #    print(files)
+    #    i=0
+    #    for file in files:
+    #        Lb3.insert(file.idx,file)
+    #    
+    #    selected_file = Lb3.get(ACTIVE)
+    #    print(selected_file)
+    #    save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file))
+    #    save_incoming.pack()
+    #    top.mainloop()###
 
 
     def start(self):
