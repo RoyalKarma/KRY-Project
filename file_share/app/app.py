@@ -38,31 +38,32 @@ class FileShareApp:
 
 
     #Helper methods for Tkinter interactions
-    def getfile(self, app_window):
+    def get_file(self, app_window):
         self.file_path = fd.askopenfilename()
         file_label = Label(app_window,text = self.file_path)
         file_label.pack()
 
     #Get list of friends from db and insert it into a listbox
-    def listfriends(self):
+    def show_friends(self):
         top = Tk()
-        Lb1 = Listbox(top)
+        friends_listbox = Listbox(top)
         friends = self.list_friends()
         print(friends)
         i=0
         for friend in friends:
-            Lb1.insert(i,friend)
+            friends_listbox.insert(i,friend)
             i+=1
-        Lb1.pack()
+        friends_listbox.pack()
         top.mainloop()
 
     #Takes regular file and prepares it to be sent via the app
-    def prepfile(self, file_path,target):
+    def prepare_file(self, file_path,target):
         return load_file(file_path,target)
     
     #Gets currently selected file from a listbox
-    def getselectedfile(self,Lb2):
-        get_selected_file = Lb2.get(ACTIVE)
+    def get_selected_file_from_listbox(self,ListBox):
+        get_selected_file = ListBox.get(ACTIVE)
+        #Make sure to always just use the database file index, since file might have a different index in the files list, listbox and db
         selected_file_index = re.search("\d+", get_selected_file).group(0)
         print("Index selected:", selected_file_index)
         #Passing files as arg doesnt work, so it has to be listed again
@@ -70,41 +71,39 @@ class FileShareApp:
         for file in files:
             if int(file.idx) == int(selected_file_index):
                 return file
+        
     
     #Pulls the outgoing queue from the db and inserts it into a listbox, currently also testing file saving from queue here
-    def listoutgoing(self):
+    def show_outgoing_queue(self):
         top = Tk()
-        Lb2 = Listbox(top)
+        outgoing_listbox = Listbox(top)
         files = self.list_outgoing_queue()
+        print(files)
         for file in files:
-            Lb2.insert(file.idx,file)
+            outgoing_listbox.insert(file.idx,file)
+        outgoing_listbox.pack()
+        top.mainloop()
 
+    # Lists incoming queue, with the options to either save all the files, save a specific one, or to remote a file
+    def show_incoming_queue(self):
+        top = Tk()
+        incoming_listbox = Listbox(top, selectmode=SINGLE)
+        incoming_listbox.pack()  
+        files = self.list_incoming_queue()
+        print(files)
+        for file in files:
+            incoming_listbox.insert(file.idx,file)
+        
         path_to_save = fd.askdirectory()
 
-        save_incoming= Button(top, text='save selected file', command=lambda:[self.save_file_from_queue(self.getselectedfile(Lb2), path_to_save)])
-        ignore_incoming= Button(top, text='Ignore file', command=lambda:[self.ignore_incoming_file(self.getselectedfile(Lb2))])
-        ignore_incoming.pack()
-        save_incoming.pack()
-        Lb2.pack()
-
+        save_incoming_button= Button(top, text='SAVE', command=lambda:[self.save_file_from_queue(self.get_selected_file_from_listbox(incoming_listbox), path_to_save)])
+        ignore_incoming_button= Button(top, text='Ignore file', command=lambda:[self.ignore_incoming_file(self.get_selected_file_from_listbox(incoming_listbox))])
+        save_all = Button(top, text='SAVE ALL', command=lambda:[self.save_all_files_from_queue(path_to_save)])
+        ignore_incoming_button.pack()
+        save_incoming_button.pack()
+        save_all.pack()
+        incoming_listbox.pack()
         top.mainloop()
-    # def listincoming(self):
-    #    top = Tk()
-    #    Lb3 = Listbox(top, selectmode=SINGLE)
-    #    Lb3.pack()
-    #
-    #    files = self.list_incoming_queue()
-    #    
-    #    print(files)
-    #    i=0
-    #    for file in files:
-    #        Lb3.insert(file.idx,file)
-    #    
-    #    selected_file = Lb3.get(ACTIVE)
-    #    print(selected_file)
-    #    save_incoming= Button(top, text='save selected file', command=lambda:self.save_file_from_queue(selected_file))
-    #    save_incoming.pack()
-    #    top.mainloop()###
 
 
     def start(self):
@@ -129,33 +128,29 @@ class FileShareApp:
         app_window = Tk()
 
         #Choose a file 
-        open_file = Button(app_window, text="pick file", command=lambda:self.getfile(app_window))
-        open_file.pack()
+        open_file_button = Button(app_window, text="Choose a file to be sent", command=lambda:self.get_file(app_window))
+        open_file_button.pack()
         #List friends usernames
-        list_friends = Button(app_window, text='List friends', command=lambda:self.listfriends())
-        list_friends.pack()
+        list_friends_button = Button(app_window, text='List friends', command=lambda:self.show_friends())
+        list_friends_button.pack()
 
         #Choose target for file sending
-        target_entry = Entry(app_window)
-        target= target_entry.get()
-        target_entry.pack()
+        transfer_target_entry = Entry(app_window)
+        target= transfer_target_entry.get()
+        transfer_target_entry.pack()
 
         #Send file  
-        send_file = Button(app_window, text='send file', command=lambda:self.send_sync(self.prepfile(self.file_path,target)))
-        send_file.pack()
+        send_file_button = Button(app_window, text='SEND FILE', command=lambda:self.send_sync(self.prepare_file(self.file_path,target)))
+        send_file_button.pack()
 
         #Show outbound queue
-        show_outbound = Button(app_window, text='List outgoing queue', command=lambda:self.listoutgoing())
-        show_outbound.pack()
+        show_outbound_button = Button(app_window, text='List outgoing queue', command=lambda:self.show_outgoing_queue())
+        show_outbound_button.pack()
 
-        #SHow inbound queue
-        #show_inbound = Button(app_window, text='List incoming queue', command=lambda:self.listincoming())
-        #show_inbound.pack()
+        #Show inbound queue
+        show_inbound_button = Button(app_window, text='List incoming queue', command=lambda:self.show_incoming_queue())
+        show_inbound_button.pack()
 
-
-
-        
-        
         app_window.mainloop()
 
     def stop(self):
@@ -196,7 +191,7 @@ class FileShareApp:
         for file in self.database.get_all_files(True):
             self.save_file_from_queue(file, path)
 
-    def ignore_incoming_file(self, file: Files) -> bool: #NOT Implemented
+    def ignore_incoming_file(self, file: Files) -> bool: # Implemented
         """Ignore a file that is incoming and remove it from the database."""
         if not file.incoming:
             return False
