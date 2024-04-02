@@ -169,7 +169,7 @@ class FileShareApp:
         """List all files that are waiting in the incoming queue."""
         return self.database.get_all_files(True)
 
-    def list_outgoing_queue(self) -> list[Files]: #I#Implementedmplemented
+    def list_outgoing_queue(self) -> list[Files]: #Implemented
         """List all files that are waiting in the outgoing queue."""
         return self.database.get_all_files(False)
 
@@ -182,7 +182,7 @@ class FileShareApp:
         except OSError as e:
             print(f"File {file.filename} could not be saved.", e)
 
-    def save_all_files_from_queue(self, path: Union[str, Path]): #NOT Implemented
+    def save_all_files_from_queue(self, path: Union[str, Path]): #Implemented
         """Save all files in the queue to the specified location."""
         if isinstance(path, str):
             path = Path(path)
