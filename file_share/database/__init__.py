@@ -153,6 +153,7 @@ class Database:
         res = (
             session.query(
                 Files.idx,
+                Files.filename,
                 Files.username,
                 Files.timestamp,
                 Files.incoming,
