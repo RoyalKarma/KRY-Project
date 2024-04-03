@@ -4,7 +4,7 @@ import socket
 import ssl
 
 from file_share.database import Database
-from file_share.definitions import PORT, my_username, debug
+from file_share.definitions import PORT, debug
 from file_share.definitions.dataclasses import Certificate, StoppableThread
 from file_share.sender.sender import send_cert
 from file_share.receiver.get_ip import get_local_ip
@@ -29,7 +29,7 @@ class StoppableUDPServer(StoppableThread):
             if self.database.get_user(peer_username, only_friends=False):
                 # Already know user
                 continue
-            await send_cert(address)
+            await send_cert(address, self.database)
             self.database.add_user(
                 Certificate(ssl.get_server_certificate((address, PORT)).encode())
             )
@@ -40,10 +40,11 @@ class StoppableUDPServer(StoppableThread):
 
 class StoppablePingClient(StoppableThread):
     def __init__(self, *args, **kwargs):
+        self.db_instance: Database = Database()
         super().__init__(*args, **kwargs)
 
-    @staticmethod
-    async def _send_ping() -> None:
+    async def _send_ping(self) -> None:
+        my_username = self.db_instance.get_me().username
         msg = json.dumps({"proto": "file_share", "username": my_username}).encode()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)

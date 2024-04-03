@@ -8,17 +8,19 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
 from file_share.definitions.dataclasses import DecryptedFile, StoppableThread
+from file_share.definitions.enums import SendStatus
 from file_share.sender.ssl_context import (
     get_ssl_context,
     get_user_address,
     get_promiscuous_context,
 )
-from file_share.definitions import my_username, PORT, certs_dir
+from file_share.definitions import PORT, certs_dir
 from file_share.database import Database
 
 
-async def send_cert(address: str):
+async def send_cert(address: str, database: Database):
     context = get_promiscuous_context()
+    my_username = database.get_me().username
     async with aiohttp.ClientSession() as session:
         to_send = aiohttp.FormData()
         to_send.add_field(
@@ -73,7 +75,7 @@ async def send_file(file: DecryptedFile) -> bool:
     """File sending
 
     Args:
-        file (DecryptedFile): Path to the file which is to be sent
+        file (DecryptedFile): The file which is to be sent
     Returns:
         None
     """
@@ -119,17 +121,23 @@ async def send_file(file: DecryptedFile) -> bool:
 
 async def send_or_store_file(
     token: bytes, file: DecryptedFile, db_connection: Database
-):
+) -> SendStatus:
+    user = db_connection.get_user(file.username, only_friends=False)
+    if not user:
+        return SendStatus.UNKNOWN_USER
+    if not user.is_friend:
+        return SendStatus.NOT_FRIEND
     if not await is_active(file.username, file.override_address):
         db_connection.store_file(file, token)
         print("User inactive, storing file to queue.")
-        return False
+        return SendStatus.QUEUED
     try:
-        return await send_file(file)
+        await send_file(file)
+        return SendStatus.SUCCESS
     except Exception as e:
         print("Uh oh", e)
         db_connection.store_file(file, token)
-        return False
+        return SendStatus.REFUSED_QUEUED
 
 
 class StoppableQueueSender(StoppableThread):

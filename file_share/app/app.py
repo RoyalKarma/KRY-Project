@@ -1,10 +1,12 @@
 import asyncio
 import ssl
+import tkinter.messagebox
 from pathlib import Path
 from typing import Any, Union, Optional
 from tkinter import *
 from tkinter import filedialog as fd
 
+from file_share.definitions.enums import SendStatus
 from file_share.definitions.procedures import load_file
 
 import re
@@ -49,7 +51,7 @@ class FileShareApp:
     # Takes regular file and prepares it to be sent via the app
     def prepare_file(self, file_path, target):
         return load_file(file_path, target)
-    
+
     # Get list of friends from db and insert it into a listbox
     def show_friends(self):
         top = Tk()
@@ -64,12 +66,13 @@ class FileShareApp:
         select_fren_button = Button(
             top,
             text="this one",
-            command=lambda: self.set_target(friends_listbox.get(ACTIVE)),
+            command=lambda: [
+                self.set_target(friends_listbox.get(ACTIVE)),
+                top.destroy(),
+            ],
         )
         select_fren_button.pack()
         top.mainloop()
-
-
 
     # Gets currently selected file from a listbox
     def get_selected_file_from_listbox(self, ListBox):
@@ -100,22 +103,27 @@ class FileShareApp:
         top = Tk()
         incoming_listbox = Listbox(top, selectmode=SINGLE)
         incoming_listbox.pack()
-        files = self.list_incoming_queue()
-        print(files)
-        for file in files:
-            parsedfile = f"{file.idx}-{file.filename}-{file.username}-{file.timestamp}"
 
-            incoming_listbox.insert(file.idx, parsedfile)
+        def update_list():
+            files = self.list_incoming_queue()
+            incoming_listbox.delete(0, END)
+            for file in files:
+                parsed_file = (
+                    f"{file.idx}-{file.filename}-{file.username}-{file.timestamp}"
+                )
+                incoming_listbox.insert(file.idx, parsed_file)
 
-        path_to_save = fd.askdirectory()
+        update_list()
 
         save_incoming_button = Button(
             top,
             text="SAVE",
             command=lambda: [
                 self.save_file_from_queue(
-                    self.get_selected_file_from_listbox(incoming_listbox), path_to_save
-                ), incoming_listbox.update_idletasks()
+                    self.get_selected_file_from_listbox(incoming_listbox),
+                    fd.askdirectory(),
+                ),
+                update_list(),
             ],
         )
         ignore_incoming_button = Button(
@@ -124,14 +132,17 @@ class FileShareApp:
             command=lambda: [
                 self.ignore_incoming_file(
                     self.get_selected_file_from_listbox(incoming_listbox)
-                    
-                ),incoming_listbox.update()
+                ),
+                update_list(),
             ],
         )
         save_all = Button(
             top,
             text="SAVE ALL",
-            command=lambda: [self.save_all_files_from_queue(path_to_save), incoming_listbox.update()],
+            command=lambda: [
+                self.save_all_files_from_queue(fd.askdirectory()),
+                update_list(),
+            ],
         )
 
         ignore_incoming_button.pack()
@@ -196,11 +207,48 @@ class FileShareApp:
         transfer_target_entry.pack()
         self.target_field = transfer_target_entry
 
+        def send_file():
+            if not self.file_path:
+                message = tkinter.messagebox.Message(
+                    message="Please choose a file first.",
+                    icon=tkinter.messagebox.WARNING,
+                )
+                message.show()
+                return
+            status = self.send_sync(
+                self.prepare_file(self.file_path, transfer_target_entry.get())
+            )
+            if status == SendStatus.SUCCESS:
+                message = tkinter.messagebox.Message(message="File sent successfully.")
+                message.show()
+            elif status == SendStatus.QUEUED:
+                message = tkinter.messagebox.Message(
+                    message="User inactive, will attempt to resend later."
+                )
+                message.show()
+            elif status == SendStatus.NOT_FRIEND:
+                message = tkinter.messagebox.Message(
+                    message="User is know to us, bot is not a trusted friend!",
+                    icon=tkinter.messagebox.ERROR,
+                )
+                message.show()
+            elif status == SendStatus.UNKNOWN_USER:
+                message = tkinter.messagebox.Message(
+                    message="Unknown user!", icon=tkinter.messagebox.ERROR
+                )
+                message.show()
+            elif status == SendStatus.REFUSED_QUEUED:
+                message = tkinter.messagebox.Message(
+                    message="User did not accept the file. An attempt to resend the file has been scheduled.",
+                    icon=tkinter.messagebox.WARNING,
+                )
+                message.show()
+
         # Send file
         send_file_button = Button(
             app_window,
             text="SEND FILE",
-            command=lambda: self.send_sync(self.prepare_file(self.file_path, transfer_target_entry.get())),
+            command=lambda: send_file(),
         )
         send_file_button.pack()
 
@@ -233,11 +281,11 @@ class FileShareApp:
         for thread in self.threads:
             thread.stop()
 
-    async def send(self, file: DecryptedFile) -> bool:  # Implemented
+    async def send(self, file: DecryptedFile) -> SendStatus:  # Implemented
         """Asynchronous send method."""
         return await send_or_store_file(self.token, file, self.database)
 
-    def send_sync(self, file: DecryptedFile) -> bool:
+    def send_sync(self, file: DecryptedFile) -> SendStatus:
         """Same as method send, but is synchronous."""
         return asyncio.run(self.send(file))
 
@@ -294,7 +342,7 @@ class FileShareApp:
         returns username on success, None otherwise
         """
         try:
-            asyncio.run(send_cert(ip_address))
+            asyncio.run(send_cert(ip_address, self.database))
             cert = Certificate(ssl.get_server_certificate((ip_address, PORT)).encode())
             self.database.add_user(cert)
             return cert.name
