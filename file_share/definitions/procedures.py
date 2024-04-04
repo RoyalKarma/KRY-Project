@@ -72,7 +72,25 @@ def get_token_hash(token: bytes) -> bytes:
     return hash_factory.digest()
 
 
-def create_cert(name: str, location: Path):
+def des_password_from_token(token: bytes) -> str:
+    """
+    Use token to generate a password used for RSA key
+    encryption.
+
+    This function encodes the token before hashing.
+    This is because the hash of unencoded token is
+    stored in the database for password validation
+    purposes. If the token was hashed unencoded,
+    then the plaintext from database could be used
+    for private key decryption.
+    """
+    b64_token = base64.b64encode(token)
+    seed_factory = sha256()
+    seed_factory.update(b64_token)
+    return base64.b64encode(seed_factory.digest(), altchars=b"_=").decode()
+
+
+def create_cert(name: str, location: Path, token: bytes):
     """Creates a certificate file."""
     Path(location).mkdir(exist_ok=True)
     subprocess.run(
@@ -80,6 +98,7 @@ def create_cert(name: str, location: Path):
             "openssl",
             "req",
             "-x509",
+            "-sha256",
             "-newkey",
             "rsa:4096",
             "-keyout",
@@ -88,7 +107,8 @@ def create_cert(name: str, location: Path):
             f"{location}/rsa.crt",
             "-days",
             "3650",
-            "-nodes",
+            "-passout",
+            f"pass:{des_password_from_token(token)}",
             "-subj",
             f"/C=CZ/ST=JMK/L=Brno/O=VUT/OU=FEKT/CN={name}",
         ]

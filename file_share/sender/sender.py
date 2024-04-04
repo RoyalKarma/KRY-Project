@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
 from file_share.definitions.dataclasses import DecryptedFile, StoppableThread
 from file_share.definitions.enums import SendStatus
+from file_share.definitions.procedures import des_password_from_token
 from file_share.sender.ssl_context import (
     get_ssl_context,
     get_user_address,
@@ -63,7 +64,7 @@ async def send_all_from_queue(token: bytes, db_connection: Database):
             continue
         file_to_send = db_connection.decrypt_file(file.idx, token)
         try:
-            success = await send_file(file_to_send)
+            success = await send_file(file_to_send, token)
             if success:
                 db_connection.remove_file_from_queue(file.idx)
         except Exception as e:
@@ -71,11 +72,12 @@ async def send_all_from_queue(token: bytes, db_connection: Database):
             continue
 
 
-async def send_file(file: DecryptedFile) -> bool:
+async def send_file(file: DecryptedFile, token: bytes) -> bool:
     """File sending
 
     Args:
         file (DecryptedFile): The file which is to be sent
+        token (bytes): Auth token of this app to decrypt private key
     Returns:
         None
     """
@@ -97,7 +99,9 @@ async def send_file(file: DecryptedFile) -> bool:
             text = await response.text()  # Received encoded API Key
         data = base64.b64decode(text)  # Decode API key
         with open(Path(certs_dir) / "rsa.key", "rb") as key_file:
-            key = load_pem_private_key(key_file.read(), password=None)
+            key = load_pem_private_key(
+                key_file.read(), password=des_password_from_token(token).encode()
+            )
         api_key = key.decrypt(
             data, PKCS1v15()
         ).decode()  # Decrypt with your private key
@@ -132,7 +136,7 @@ async def send_or_store_file(
         print("User inactive, storing file to queue.")
         return SendStatus.QUEUED
     try:
-        await send_file(file)
+        await send_file(file, token)
         return SendStatus.SUCCESS
     except Exception as e:
         print("Uh oh", e)

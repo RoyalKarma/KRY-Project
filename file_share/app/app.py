@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import ssl
+from cryptography.hazmat.primitives import hashes
 import tkinter.messagebox
 from pathlib import Path
 from typing import Any, Union, Optional
@@ -12,7 +14,7 @@ from file_share.definitions.procedures import load_file
 import re
 
 from file_share.database import Database, Files
-from file_share.definitions import PORT
+from file_share.definitions import PORT, certs_dir
 from file_share.friend_finder.ping_em import StoppablePingClient, StoppableUDPServer
 from file_share.definitions.dataclasses import (
     StoppableThread,
@@ -44,7 +46,7 @@ class FileShareApp:
         file_label = Entry(app_window)
         file_label.delete(0, END)
         file_label.insert(0, self.file_path)
-        file_label.grid(row=4,column=1, sticky=EW)
+        file_label.grid(row=4, column=1, sticky=EW)
 
     def set_target(self, friend):
         self.target_field.delete(0, END)
@@ -59,7 +61,6 @@ class FileShareApp:
         top = Tk()
         friends_listbox = Listbox(top, width=50)
         friends = self.list_friends()
-        print(friends)
         i = 0
         for friend in friends:
             friends_listbox.insert(i, friend)
@@ -197,19 +198,20 @@ class FileShareApp:
             text="Choose a file to be sent",
             command=lambda: self.get_file(app_window),
         )
-        open_file_button.grid(column=0, row=1,sticky=EW, padx=10, pady=5)
+        open_file_button.grid(column=0, row=1, sticky=EW, padx=10, pady=5)
         # List friends usernames
         list_friends_button = Button(
             app_window, text="List friends", command=lambda: self.show_friends()
         )
-        list_friends_button.grid(column=0,row=2, sticky=EW, padx=10, pady=5)
+        list_friends_button.grid(column=0, row=2, sticky=EW, padx=10, pady=5)
 
         # Choose target for file sending
         transfer_target_entry = Entry(app_window)
-        transfer_target_entry.grid(column=1,row=2, padx=10)
-        transfer_target_entry.insert(0,"Input friend name here or use friend list to choose one")
+        transfer_target_entry.grid(column=1, row=2, padx=10)
+        transfer_target_entry.insert(
+            0, "Input friend name here or use friend list to choose one"
+        )
         self.target_field = transfer_target_entry
-        
 
         def send_file():
             if not self.file_path:
@@ -232,7 +234,7 @@ class FileShareApp:
                 message.show()
             elif status == SendStatus.NOT_FRIEND:
                 message = tkinter.messagebox.Message(
-                    message="User is know to us, bot is not a trusted friend!",
+                    message="User is known to us, bot is not a trusted friend!",
                     icon=tkinter.messagebox.ERROR,
                 )
                 message.show()
@@ -254,7 +256,7 @@ class FileShareApp:
             text="SEND FILE",
             command=lambda: send_file(),
         )
-        send_file_button.grid(row=4, sticky=EW, padx=10,pady=5)
+        send_file_button.grid(row=4, sticky=EW, padx=10, pady=5)
 
         # Show outbound queue
         show_outbound_button = Button(
@@ -262,7 +264,7 @@ class FileShareApp:
             text="List outgoing queue",
             command=lambda: self.show_outgoing_queue(),
         )
-        show_outbound_button.grid(column=0, row=3, sticky=EW, padx=10,pady=5)
+        show_outbound_button.grid(column=0, row=3, sticky=EW, padx=10, pady=5)
 
         # Show inbound queue
         show_inbound_button = Button(
@@ -270,14 +272,14 @@ class FileShareApp:
             text="List incoming queue",
             command=lambda: self.show_incoming_queue(),
         )
-        show_inbound_button.grid(column=1,row=3, sticky=EW, padx=10,pady=5)
+        show_inbound_button.grid(column=1, row=3, sticky=EW, padx=10, pady=5)
 
         show_non_friends_button = Button(
             app_window,
             text="List Non friends in DB",
             command=lambda: self.show_non_friends(),
         )
-        show_non_friends_button.grid(column=1,row=1, sticky=EW, padx=10,pady=5)
+        show_non_friends_button.grid(column=1, row=1, sticky=EW, padx=10, pady=5)
 
         app_window.mainloop()
 
@@ -352,3 +354,14 @@ class FileShareApp:
             return cert.name
         except:
             return None
+
+    @staticmethod
+    def get_my_fingerprint() -> str:
+        """Return a fingerprint of my certificate to convince friends."""
+        cert = Certificate(Path(certs_dir) / "rsa.crt")
+        return base64.b64encode(cert.cert.fingerprint(hashes.SHA256())).decode()
+
+    def get_user_fingerprint(self, username: str) -> str:
+        """Return a fingerprint of a friend certificate to check with them."""
+        cert = Certificate(self.database.get_user(username, False).cert_file)
+        return base64.b64encode(cert.cert.fingerprint(hashes.SHA256())).decode()
