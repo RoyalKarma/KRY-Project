@@ -41,8 +41,10 @@ class FileShareApp:
     # Helper methods for Tkinter interactions
     def get_file(self, app_window):
         self.file_path = fd.askopenfilename()
-        file_label = Label(app_window, text=self.file_path)
-        file_label.pack()
+        file_label = Entry(app_window)
+        file_label.delete(0, END)
+        file_label.insert(0, self.file_path)
+        file_label.grid(row=4,column=1, sticky=EW)
 
     def set_target(self, friend):
         self.target_field.delete(0, END)
@@ -55,7 +57,7 @@ class FileShareApp:
     # Get list of friends from db and insert it into a listbox
     def show_friends(self):
         top = Tk()
-        friends_listbox = Listbox(top)
+        friends_listbox = Listbox(top, width=50)
         friends = self.list_friends()
         print(friends)
         i = 0
@@ -89,7 +91,7 @@ class FileShareApp:
     # Pulls the outgoing queue from the db and inserts it into a listbox, currently also testing file saving from queue here
     def show_outgoing_queue(self):
         top = Tk()
-        outgoing_listbox = Listbox(top)
+        outgoing_listbox = Listbox(top, width=50)
         files = self.list_outgoing_queue()
         print(files)
         for file in files:
@@ -101,7 +103,7 @@ class FileShareApp:
     # Lists incoming queue, with the options to either save all the files, save a specific one, or to remote a file
     def show_incoming_queue(self):
         top = Tk()
-        incoming_listbox = Listbox(top, selectmode=SINGLE)
+        incoming_listbox = Listbox(top, selectmode=SINGLE, width=50)
         incoming_listbox.pack()
 
         def update_list():
@@ -195,17 +197,19 @@ class FileShareApp:
             text="Choose a file to be sent",
             command=lambda: self.get_file(app_window),
         )
-        open_file_button.pack()
+        open_file_button.grid(column=0, row=1,sticky=EW, padx=10, pady=5)
         # List friends usernames
         list_friends_button = Button(
             app_window, text="List friends", command=lambda: self.show_friends()
         )
-        list_friends_button.pack()
+        list_friends_button.grid(column=0,row=2, sticky=EW, padx=10, pady=5)
 
         # Choose target for file sending
         transfer_target_entry = Entry(app_window)
-        transfer_target_entry.pack()
+        transfer_target_entry.grid(column=1,row=2, padx=10)
+        transfer_target_entry.insert(0,"Input friend name here or use friend list to choose one")
         self.target_field = transfer_target_entry
+        
 
         def send_file():
             if not self.file_path:
@@ -250,7 +254,7 @@ class FileShareApp:
             text="SEND FILE",
             command=lambda: send_file(),
         )
-        send_file_button.pack()
+        send_file_button.grid(row=4, sticky=EW, padx=10,pady=5)
 
         # Show outbound queue
         show_outbound_button = Button(
@@ -258,7 +262,7 @@ class FileShareApp:
             text="List outgoing queue",
             command=lambda: self.show_outgoing_queue(),
         )
-        show_outbound_button.pack()
+        show_outbound_button.grid(column=0, row=3, sticky=EW, padx=10,pady=5)
 
         # Show inbound queue
         show_inbound_button = Button(
@@ -266,14 +270,14 @@ class FileShareApp:
             text="List incoming queue",
             command=lambda: self.show_incoming_queue(),
         )
-        show_inbound_button.pack()
+        show_inbound_button.grid(column=1,row=3, sticky=EW, padx=10,pady=5)
 
         show_non_friends_button = Button(
             app_window,
             text="List Non friends in DB",
             command=lambda: self.show_non_friends(),
         )
-        show_non_friends_button.pack()
+        show_non_friends_button.grid(column=1,row=1, sticky=EW, padx=10,pady=5)
 
         app_window.mainloop()
 
