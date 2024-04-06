@@ -38,7 +38,6 @@ class FileShareApp:
         self.threads: list[StoppableThread] = []
         self.database = Database()
         self.file_path = ""
-        self.target_field = None
 
     # Helper methods for Tkinter interactions
     def get_file(self, app_window):
@@ -66,15 +65,6 @@ class FileShareApp:
             friends_listbox.insert(i, friend)
             i += 1
         friends_listbox.pack()
-        select_fren_button = Button(
-            top,
-            text="this one",
-            command=lambda: [
-                self.set_target(friends_listbox.get(ACTIVE)),
-                top.destroy(),
-            ],
-        )
-        select_fren_button.pack()
         top.mainloop()
 
     # Gets currently selected file from a listbox
@@ -171,6 +161,24 @@ class FileShareApp:
         befriend_button.pack()
         top.mainloop()
 
+    def get_own_fingerprint(self):
+        top = Tk()
+        fingerprint = self.get_my_fingerprint()
+        finger_label = Label(top, text=fingerprint)
+        finger_label.pack()
+
+    def get_friends_fingerprint(self, name):
+        top = Tk()
+        fingerprint = self.get_user_fingerprint(username=name)
+        print(fingerprint)
+        fingerprint_label = Label(top, text=fingerprint)
+        fingerprint_label.pack()
+    
+    def get_all_users(self):
+        friends = self.list_friends()
+        non_friends = self.list_non_friends()
+        return  friends+non_friends
+
     def start(self):
         """Start the application."""
         print("APP HAS STARTED")
@@ -206,12 +214,12 @@ class FileShareApp:
         list_friends_button.grid(column=0, row=2, sticky=EW, padx=10, pady=5)
 
         # Choose target for file sending
-        transfer_target_entry = Entry(app_window)
-        transfer_target_entry.grid(column=1, row=2, padx=10)
-        transfer_target_entry.insert(
-            0, "Input friend name here or use friend list to choose one"
-        )
-        self.target_field = transfer_target_entry
+      
+        transfer_targets = self.list_friends()
+        transfer_target_var = StringVar(app_window)
+        transefer_target_options = OptionMenu(app_window,transfer_target_var,*transfer_targets)
+        transefer_target_options.grid(column=1, row=2,sticky=EW, padx=10, pady=5)
+
 
         def send_file():
             if not self.file_path:
@@ -222,7 +230,7 @@ class FileShareApp:
                 message.show()
                 return
             status = self.send_sync(
-                self.prepare_file(self.file_path, transfer_target_entry.get())
+                self.prepare_file(self.file_path, transfer_target_var.get())
             )
             if status == SendStatus.SUCCESS:
                 message = tkinter.messagebox.Message(message="File sent successfully.")
@@ -281,6 +289,40 @@ class FileShareApp:
         )
         show_non_friends_button.grid(column=1, row=1, sticky=EW, padx=10, pady=5)
 
+        show_own_fingerprint_button = Button(
+            app_window,
+            text="Show  my own fingerprint",
+            command=lambda: self.get_own_fingerprint(),
+        )
+        show_own_fingerprint_button.grid(column=0, row=5, sticky=EW, padx=10, pady=5)
+
+        users=self.get_all_users()
+        fingerprint_user = StringVar(app_window)
+        show_friends_fingerprint_options = OptionMenu(app_window,fingerprint_user,*users)
+
+        show_friends_fingerprint_button = Button(
+            app_window,
+            text="Show users fingerprint",
+            command=lambda: self.get_friends_fingerprint(
+                fingerprint_user.get()
+            ),
+        )
+
+        show_friends_fingerprint_options.grid(column=1, row=6, sticky=EW, padx=10, pady=5)
+        show_friends_fingerprint_button.grid(
+            column=0, row=6, sticky=EW, padx=10, pady=5
+        )
+
+        scan_ip_entry = Entry(app_window)
+        scan_ip_entry.grid(column=1, row=7, sticky=EW, padx=10, pady=5)
+
+        scan_ip_button = Button(
+            app_window,
+            text="Scan IP",
+            command=lambda: self.check_ip(scan_ip_entry.get()),
+        )
+        scan_ip_button.grid(column=0, row=7, sticky=EW, padx=10, pady=5)
+
         app_window.mainloop()
 
     def stop(self):
@@ -332,11 +374,11 @@ class FileShareApp:
         """Returns a list of all known friends' usernames."""
         return self.database.get_all_users()
 
-    def list_non_friends(self) -> list[str]:  # NOT implemented
+    def list_non_friends(self) -> list[str]:  #  Implemented
         """Returns all users that are known but are not our friends."""
         return self.database.get_all_users(False)
 
-    def befriend(self, username: str) -> bool:  # NOT implemented
+    def befriend(self, username: str) -> bool:  #  Implemented
         """Make a friend out of the user. Returns False if the user was already our friend."""
         return self.database.befriend(username)
 
