@@ -64,7 +64,7 @@ async def send_all_from_queue(token: bytes, db_connection: Database):
             continue
         file_to_send = db_connection.decrypt_file(file.idx, token)
         try:
-            success = await send_file(file_to_send, token)
+            success = await send_file(file_to_send, token, db_connection)
             if success:
                 db_connection.remove_file_from_queue(file.idx)
         except Exception as e:
@@ -72,7 +72,7 @@ async def send_all_from_queue(token: bytes, db_connection: Database):
             continue
 
 
-async def send_file(file: DecryptedFile, token: bytes) -> bool:
+async def send_file(file: DecryptedFile, token: bytes, db_connection: Database) -> bool:
     """File sending
 
     Args:
@@ -81,6 +81,8 @@ async def send_file(file: DecryptedFile, token: bytes) -> bool:
     Returns:
         None
     """
+    my_username = db_connection.get_me().username
+
     username = file.username
     address = file.override_address or get_user_address(username)
     if not address:
@@ -91,7 +93,7 @@ async def send_file(file: DecryptedFile, token: bytes) -> bool:
     async with aiohttp.ClientSession() as session:
         async with session.post(
             # Sending for authentication
-            f"https://{address}:{PORT}/auth?name={username}",
+            f"https://{address}:{PORT}/auth?name={my_username}",
             ssl_context=context,
         ) as response:
             if response.status != 200:
@@ -136,7 +138,7 @@ async def send_or_store_file(
         print("User inactive, storing file to queue.")
         return SendStatus.QUEUED
     try:
-        await send_file(file, token)
+        await send_file(file, token, db_connection)
         return SendStatus.SUCCESS
     except Exception as e:
         print("Uh oh", e)

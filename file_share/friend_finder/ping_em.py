@@ -7,7 +7,7 @@ from file_share.database import Database
 from file_share.definitions import PORT, debug
 from file_share.definitions.dataclasses import Certificate, StoppableThread
 from file_share.sender.sender import send_cert
-from file_share.receiver.get_ip import get_local_ip
+from file_share.receiver.get_ip import get_local_ip, get_broadcast_addr
 
 
 class StoppableUDPServer(StoppableThread):
@@ -17,8 +17,8 @@ class StoppableUDPServer(StoppableThread):
 
     async def _udp_server(self):
         """Function to run the UDP listener that stores friend requests."""
-        soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        soc.bind((get_local_ip(), PORT))
+        soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        soc.bind(("", PORT))
         while not self._stop_event.is_set():
             message, address = soc.recvfrom(1024)
             address = address[0]  # get only IP, ignore port
@@ -49,7 +49,7 @@ class StoppablePingClient(StoppableThread):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.bind((get_local_ip(), 0))
-        address = "127.0.0.1" if debug else "255.255.255.255"
+        address = "127.0.0.1" if debug else get_broadcast_addr()
 
         sock.sendto(msg, (address, PORT))
         sock.close()

@@ -300,7 +300,7 @@ class FileShareApp:
         users = self.get_all_users()
         fingerprint_user = StringVar(app_window)
         show_friends_fingerprint_options = OptionMenu(
-            app_window, fingerprint_user, *users
+            app_window, fingerprint_user, "", *users
         )
 
         show_friends_fingerprint_button = Button(
@@ -395,10 +395,10 @@ class FileShareApp:
         try:
             asyncio.run(send_cert(ip_address, self.database))
             cert = Certificate(ssl.get_server_certificate((ip_address, PORT)).encode())
-            self.database.add_user(cert)
+            self.database.add_user(cert, ip_address)
             return cert.name
-        except:
-            return None
+        except Exception as e:
+            print(e)
 
     @staticmethod
     def get_my_fingerprint() -> str:
