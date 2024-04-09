@@ -21,19 +21,26 @@ class StoppableUDPServer(StoppableThread):
         soc.bind(("", PORT))
         while not self._stop_event.is_set():
             message, address = soc.recvfrom(1024)
-            address = address[0]  # get only IP, ignore port
-            json_message = json.loads(message.decode())
-            if json_message["proto"] != "file_share":
+            try:
+                address = address[0]  # get only IP, ignore port
+                json_message = json.loads(message.decode())
+                if json_message["proto"] != "file_share":
+                    continue
+                peer_username = json_message["username"]
+                if self.database.get_user(peer_username, only_friends=False):
+                    # Already know user
+                    continue
+                if not debug and self.database.get_me().username == peer_username:
+                    # that me lol
+                    continue
+                await send_cert(address, self.database)
+                self.database.add_user(
+                    Certificate(ssl.get_server_certificate((address, PORT)).encode()),
+                    address,
+                )
+            except Exception as e:
+                print(e)
                 continue
-            peer_username = json_message["username"]
-            if self.database.get_user(peer_username, only_friends=False):
-                # Already know user
-                continue
-            await send_cert(address, self.database)
-            self.database.add_user(
-                Certificate(ssl.get_server_certificate((address, PORT)).encode()),
-                address,
-            )
 
     def run(self):
         asyncio.run(self._udp_server())
