@@ -173,11 +173,11 @@ class FileShareApp:
         print(fingerprint)
         fingerprint_label = Label(top, text=fingerprint)
         fingerprint_label.pack()
-    
+
     def get_all_users(self):
         friends = self.list_friends()
         non_friends = self.list_non_friends()
-        return  friends+non_friends
+        return friends + non_friends
 
     def start(self):
         """Start the application."""
@@ -214,12 +214,13 @@ class FileShareApp:
         list_friends_button.grid(column=0, row=2, sticky=EW, padx=10, pady=5)
 
         # Choose target for file sending
-      
+
         transfer_targets = self.list_friends()
         transfer_target_var = StringVar(app_window)
-        transefer_target_options = OptionMenu(app_window,transfer_target_var,*transfer_targets)
-        transefer_target_options.grid(column=1, row=2,sticky=EW, padx=10, pady=5)
-
+        transefer_target_options = OptionMenu(
+            app_window, transfer_target_var, "", *transfer_targets
+        )
+        transefer_target_options.grid(column=1, row=2, sticky=EW, padx=10, pady=5)
 
         def send_file():
             if not self.file_path:
@@ -296,19 +297,21 @@ class FileShareApp:
         )
         show_own_fingerprint_button.grid(column=0, row=5, sticky=EW, padx=10, pady=5)
 
-        users=self.get_all_users()
+        users = self.get_all_users()
         fingerprint_user = StringVar(app_window)
-        show_friends_fingerprint_options = OptionMenu(app_window,fingerprint_user,*users)
+        show_friends_fingerprint_options = OptionMenu(
+            app_window, fingerprint_user, *users
+        )
 
         show_friends_fingerprint_button = Button(
             app_window,
             text="Show users fingerprint",
-            command=lambda: self.get_friends_fingerprint(
-                fingerprint_user.get()
-            ),
+            command=lambda: self.get_friends_fingerprint(fingerprint_user.get()),
         )
 
-        show_friends_fingerprint_options.grid(column=1, row=6, sticky=EW, padx=10, pady=5)
+        show_friends_fingerprint_options.grid(
+            column=1, row=6, sticky=EW, padx=10, pady=5
+        )
         show_friends_fingerprint_button.grid(
             column=0, row=6, sticky=EW, padx=10, pady=5
         )
