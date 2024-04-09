@@ -31,7 +31,8 @@ class StoppableUDPServer(StoppableThread):
                 continue
             await send_cert(address, self.database)
             self.database.add_user(
-                Certificate(ssl.get_server_certificate((address, PORT)).encode())
+                Certificate(ssl.get_server_certificate((address, PORT)).encode()),
+                address,
             )
 
     def run(self):

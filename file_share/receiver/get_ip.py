@@ -15,5 +15,5 @@ def get_local_ip() -> str:
 
 def get_broadcast_addr() -> str:
     split_ip = get_local_ip().split(".")[0:-1]
-    ip = ".".join(split_ip) + "255"
+    ip = ".".join(split_ip) + ".255"
     return ip
