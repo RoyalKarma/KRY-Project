@@ -56,6 +56,12 @@ async def is_active(username: str, address: Optional[str] = None) -> bool:
 
 
 async def send_all_from_queue(token: bytes, db_connection: Database):
+    """
+    Function that sends all files from the queue to the users if they are active.
+    Args:
+        token (bytes): Auth token of this app to decrypt private key
+        db_connection (Database): Database object
+    """
     queue = db_connection.get_all_files(False)
     for file in queue:
         username = file.username
@@ -128,11 +134,21 @@ async def send_file(file: DecryptedFile, token: bytes, db_connection: Database) 
 async def send_or_store_file(
     token: bytes, file: DecryptedFile, db_connection: Database
 ) -> SendStatus:
+    """
+    Function that checks if the user is active and sends the file if they are, otherwise it stores it
+    in queue.
+    Args:
+        token (bytes): Auth token of this app to decrypt private key
+        file (DecryptedFile): The file which is to be sent
+        db_connection (Database): Database object
+    """
+    # Retrieve user from db
     user = db_connection.get_user(file.username, only_friends=False)
     if not user:
         return SendStatus.UNKNOWN_USER
     if not user.is_friend:
         return SendStatus.NOT_FRIEND
+    # Check if user is active if not store file to queue
     if not await is_active(file.username, file.override_address):
         db_connection.store_file(file, token)
         print("User inactive, storing file to queue.")
@@ -147,6 +163,10 @@ async def send_or_store_file(
 
 
 class StoppableQueueSender(StoppableThread):
+    """
+    Definition of a thread that periodically checks the queue and sends files to users if they are active.
+    """
+
     def __init__(self, token: bytes, *args, **kwargs):
         self.token = token
         self.database: Database = Database()

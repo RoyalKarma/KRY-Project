@@ -73,6 +73,12 @@ class API:
         return base64.b64encode(encrypted)
 
     async def friends(self, file: UploadFile, request: Request):
+        """
+        Add friend to the database
+        Args:
+            file (UploadFile): PEM-encoded certificate
+            request (Request): Request object
+        """
         try:
             data = await file.read()
             certificate = Certificate(data)

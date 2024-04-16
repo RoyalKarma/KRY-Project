@@ -1,0 +1,85 @@
+\section{GUI}
+The GUI start by running command \texttt{python3 main.py} in the virtual enviroment.
+
+\subsection{Login screen}
+When the app is opened, the user is greeted by a login screen. The user can either login with an existing account if you used the app in the past as shown in Figure \ref{fig:login}
+or create a new one wiht username and password as in Figure \ref{fig:reg}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/login.png}
+    \caption{Login screen}
+    \label{fig:login}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/register.png}
+    \caption{Register screen}
+    \label{fig:reg}
+\end{figure}
+
+\newpage
+
+\subsection{Main window}
+After the login the user will se the main application window. 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/mainwindow.png}
+    \caption{Main window}
+    \label{fig:main}
+\end{figure}
+
+\subsubsection{File selection}
+Selecting file for transfer is done by the button \texttt{Choose a file to be sent} that is shown in Figure \ref{fig:main}. 
+After pressing the button, the file selection window will open and user can select the file they want to send.
+
+\subsubsection{User discovery and friend addition}
+There are 2 ways to discorver users using the app. Either user can scan the whole network for the active apps that are running using \texttt{List Non friends in DB} button.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/ListNonFriends.png}
+    \caption{Adding users to db by scanning the network}
+    \label{fig:LNF}
+\end{figure}
+The other way is by using button \texttt{Scan IP}. User enters the address he wants to scan in the text field next to the button and then presses the button.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/ScanIP.png}
+    \caption{Adding user to db by scanning given IP}
+    \label{fig:scanIP}
+\end{figure}
+
+Adding friends is handled by pressing the button \texttt{Befriend this user} that we can see in Figure \ref{fig:LNF}.
+
+\subsubsection{Listing of users}
+There are 2 ways you can list users that user can interact with. Either list only those users who user added to their friend list or list all users in database.
+For this there are 2 buttons shown on Figure \ref{fig:main}. Those are \texttt{List friends} and \texttt{List Non friends in DB} respectively.
+
+\subsubsection{Listing queued files}
+Files that cannot be sent immediately are queued and will be sent when the user is available. The user can see the list of queued files by pressing the button 
+\texttt{List outgoing queue}.\\
+
+\subsubsection{Friend selection}
+Choosing a friend who will be the target of the file transfer is done by choosing one friend from the rolldown menu next to the \texttt{List friends} button.\\
+
+\subsubsection{File sharing}
+After selecting the file and the friend to send it to, the user can press the button \texttt{Send file} to send the file to the selected friend.
+If the target is not available, the app will prompt the user with following message and put the file in the queue to be sent later.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/notAvailable.png}
+    \caption{Target not available}
+    \label{fig:notAvail}
+\end{figure}
+
+Recieving the file is done by the target user pressing the button \texttt{List incoming queue} which opens window with all files that are waiting to be
+recieved. The user can either save or ignore a single file or accept all files in the queue.\\
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/queue.png}
+    \caption{Incoming queue}
+    \label{fig:inQueue}
+\end{figure}
+
+If the user chooses to save the file he is prompted with window to select the location where the file will be saved.\\

@@ -1,0 +1,19 @@
+\section{Introduction}
+The aim of this project created for a university course named Cryptography was to create an application for sensitive file sharing. It is designed to be used by 
+users who are on the same network and want share encrypted files without the user of a server, that means using peer-to-peer communication. The application is
+written in Python 3.12 with the use of supporting libraries which will be described later in this introduction. The app is accopmanied by a graphical user
+interface. Application is designed to be used on any operating system that supports Python 3.12 and the required libraries. \\
+
+The required files to run this application are all in this repository. Apart from the \texttt{main.py} file all of the code is in the file\_share directory.
+The \texttt{main.py} file is the entry point of the application and is used to start the GUI. As input for the app there is nothing required apart from a file
+that a user wants to send. The output is a file that was sent to the user from another user using the app. \\
+
+The application uses the following libraries:
+\begin{itemize}
+    \item \texttt{Tkinter} - for the Graphical User Interface
+    \item \texttt{Uvicorn} - used for reciever realisation
+    \item \texttt{FastAPI} - for the reciever API
+    \item \texttt{SQLAlchemy} - for the database implementation
+    \item \texttt{Cryptography} - for encryption and decryption of files
+    \item \texttt{AIOHTTP} - for communication between the sender and the reciever
+\end{itemize}
