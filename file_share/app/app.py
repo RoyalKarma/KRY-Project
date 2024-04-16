@@ -58,6 +58,7 @@ class FileShareApp:
     # Get list of friends from db and insert it into a listbox
     def show_friends(self):
         top = Tk()
+        top.title("Friend List")
         friends_listbox = Listbox(top, width=50)
         friends = self.list_friends()
         i = 0
@@ -82,6 +83,7 @@ class FileShareApp:
     # Pulls the outgoing queue from the db and inserts it into a listbox, currently also testing file saving from queue here
     def show_outgoing_queue(self):
         top = Tk()
+        top.title("Outgoing files queue")
         outgoing_listbox = Listbox(top, width=50)
         files = self.list_outgoing_queue()
         print(files)
@@ -94,6 +96,7 @@ class FileShareApp:
     # Lists incoming queue, with the options to either save all the files, save a specific one, or to remote a file
     def show_incoming_queue(self):
         top = Tk()
+        top.title("Incoming files queue")
         incoming_listbox = Listbox(top, selectmode=SINGLE, width=50)
         incoming_listbox.pack()
 
@@ -146,6 +149,7 @@ class FileShareApp:
 
     def show_non_friends(self):
         top = Tk()
+        top.title("Non-friends in DB")
         befriend_button = Button(
             top,
             text="Befriend this MF",
@@ -163,12 +167,19 @@ class FileShareApp:
 
     def get_own_fingerprint(self):
         top = Tk()
+        top.title("User fingerprint")
         fingerprint = self.get_my_fingerprint()
         finger_label = Label(top, text=fingerprint)
         finger_label.pack()
 
     def get_friends_fingerprint(self, name):
+        if not name:
+            message = tkinter.messagebox.Message(message="No friend was chosen")
+            message.show()
+            return 0
+
         top = Tk()
+        top.title("Friend fingerprint")
         fingerprint = self.get_user_fingerprint(username=name)
         print(fingerprint)
         fingerprint_label = Label(top, text=fingerprint)
@@ -205,6 +216,7 @@ class FileShareApp:
 
         # init main window
         app_window = Tk()
+        app_window.title("File Sender 3000")
 
         # Choose a file
         open_file_button = Button(
@@ -346,7 +358,7 @@ class FileShareApp:
                 ),
             ],
         )
-        refresh_options_button.grid(column=1, row=5)
+        refresh_options_button.grid(column=1, row=5, sticky=EW, padx=10, pady=5)
         app_window.mainloop()
 
     def stop(self):

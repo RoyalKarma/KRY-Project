@@ -8,6 +8,7 @@ config = {"visible": True, "audible": True}
 
 def main():
     login_window = Tk()
+    login_window.title("Login Window")
     is_this_first_init = is_first_init()
 
     if is_this_first_init:
