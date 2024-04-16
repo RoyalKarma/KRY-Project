@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Union, Optional
 from tkinter import *
 from tkinter import filedialog as fd
-
+from tkinter import _setit
 from file_share.definitions.enums import SendStatus
 from file_share.definitions.procedures import load_file
 
@@ -77,6 +77,7 @@ class FileShareApp:
             None
         """
         top = Tk()
+        top.title("Friend List")
         friends_listbox = Listbox(top, width=50)
         friends = self.list_friends()
         i = 0
@@ -110,6 +111,7 @@ class FileShareApp:
             None
         """
         top = Tk()
+        top.title("Outgoing files queue")
         outgoing_listbox = Listbox(top, width=50)
         files = self.list_outgoing_queue()
         print(files)
@@ -126,6 +128,7 @@ class FileShareApp:
             None
         """
         top = Tk()
+        top.title("Incoming files queue")
         incoming_listbox = Listbox(top, selectmode=SINGLE, width=50)
         incoming_listbox.pack()
 
@@ -186,6 +189,7 @@ class FileShareApp:
             None
         """
         top = Tk()
+        top.title("Non-friends in DB")
         befriend_button = Button(
             top,
             text="Befriend this MF",
@@ -206,6 +210,7 @@ class FileShareApp:
         Show logged in user's fingerprint.
         """
         top = Tk()
+        top.title("User fingerprint")
         fingerprint = self.get_my_fingerprint()
         finger_label = Label(top, text=fingerprint)
         finger_label.pack()
@@ -216,7 +221,13 @@ class FileShareApp:
         Args:
             name: username of the friend
         """
+        if not name:
+            message = tkinter.messagebox.Message(message="No friend was chosen")
+            message.show()
+            return 0
+
         top = Tk()
+        top.title("Friend fingerprint")
         fingerprint = self.get_user_fingerprint(username=name)
         print(fingerprint)
         fingerprint_label = Label(top, text=fingerprint)
@@ -231,6 +242,12 @@ class FileShareApp:
         friends = self.list_friends()
         non_friends = self.list_non_friends()
         return friends + non_friends
+
+    def refresh_menu(self, var, menu, choices):
+        var.set("")
+        menu["menu"].delete(0, "end")
+        for choice in choices:
+            menu["menu"].add_command(label=choice, command=_setit(var, choice))
 
     def start(self):
         """Start the application."""
@@ -252,6 +269,7 @@ class FileShareApp:
 
         # init main window
         app_window = Tk()
+        app_window.title("File Sender 3000")
 
         # Choose a file
         open_file_button = Button(
@@ -379,6 +397,21 @@ class FileShareApp:
         )
         scan_ip_button.grid(column=0, row=7, sticky=EW, padx=10, pady=5)
 
+        refresh_options_button = Button(
+            app_window,
+            text="refresh",
+            command=lambda: [
+                self.refresh_menu(
+                    fingerprint_user,
+                    show_friends_fingerprint_options,
+                    self.list_friends(),
+                ),
+                self.refresh_menu(
+                    transfer_target_var, transefer_target_options, self.list_friends()
+                ),
+            ],
+        )
+        refresh_options_button.grid(column=1, row=5, sticky=EW, padx=10, pady=5)
         app_window.mainloop()
 
     def stop(self):
