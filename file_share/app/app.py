@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Union, Optional
 from tkinter import *
 from tkinter import filedialog as fd
-
+from tkinter import _setit
 from file_share.definitions.enums import SendStatus
 from file_share.definitions.procedures import load_file
 
@@ -179,6 +179,12 @@ class FileShareApp:
         non_friends = self.list_non_friends()
         return friends + non_friends
 
+    def refresh_menu(self, var, menu, choices):
+        var.set("")
+        menu["menu"].delete(0, "end")
+        for choice in choices:
+            menu["menu"].add_command(label=choice, command=_setit(var, choice))
+
     def start(self):
         """Start the application."""
         print("APP HAS STARTED")
@@ -326,6 +332,21 @@ class FileShareApp:
         )
         scan_ip_button.grid(column=0, row=7, sticky=EW, padx=10, pady=5)
 
+        refresh_options_button = Button(
+            app_window,
+            text="refresh",
+            command=lambda: [
+                self.refresh_menu(
+                    fingerprint_user,
+                    show_friends_fingerprint_options,
+                    self.list_friends(),
+                ),
+                self.refresh_menu(
+                    transfer_target_var, transefer_target_options, self.list_friends()
+                ),
+            ],
+        )
+        refresh_options_button.grid(column=1, row=5)
         app_window.mainloop()
 
     def stop(self):
