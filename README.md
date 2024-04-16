@@ -1,5 +1,10 @@
 # KRY Project
 
+## Prerequisites
+
+- Only tested on Linux
+- Install `openssl`, `cargo` and `python3-tk` packages
+
 ## Local installation
 
 ```bash
@@ -15,11 +20,9 @@ pdm install
 python3 main.py
 ```
 
-Visit [Swagger](https://localhost:42069/docs).
+- Choose your username and password
+- Explore 
 
-In another window, run:
+**NOTE**:
 
-```bash
-source .venv/bin/activate
-python3 file_share/app/test_send_file.py
-```
+This App is only a PoC and is not intended for production use
