@@ -19,11 +19,25 @@ def _get_key(token: bytes, seed: bytes) -> bytes:
 
 
 def encrypt(data: bytes, token: bytes, seed: bytes) -> bytes:
+    """
+    Encrypt data using token and seed.
+    Args:
+        data (bytes): data to be encrypted
+        token (bytes): token used for encryption
+        seed (bytes): seed used for encryption
+    """
     encryption_factory = Fernet(_get_key(token, seed))
     return encryption_factory.encrypt(data)
 
 
 def decrypt(data: bytes, token: bytes, seed: bytes) -> bytes:
+    """
+    Decrypt data using token and seed.
+    Args:
+        data (bytes): data to be decrypted
+        token (bytes): token used for decryption
+        seed (bytes): seed used for decryption
+    """
     decryption_factory = Fernet(_get_key(token, seed))
     return decryption_factory.decrypt(data)
 

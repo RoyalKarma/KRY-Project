@@ -9,10 +9,27 @@ db_instance = Database()
 
 
 def is_first_init():
+    """
+    Fuction to check if this is the first time the app is run.
+    Args:
+        None
+    Returns:
+        bool: True if this is the first time the app is run, False otherwise
+    """
     return db_instance.get_me() is None
 
 
+#
 def first_init_app(name: str, password: str, config: dict[str, Any]) -> FileShareApp:
+    """
+    If this is the first time the app is run, this function will create a new user and generate a cert for it.
+    Args:
+        name (str): Name of the user
+        password (str): Password of the user
+        config (dict[str, Any]): Configuration dictionary
+    Returns:
+        FileShareApp: FileShareApp instance
+    """
     if not db_instance.add_me(name, password):
         raise ValueError("This is not first app run.")
     token = db_instance.get_token(password)
@@ -21,4 +38,12 @@ def first_init_app(name: str, password: str, config: dict[str, Any]) -> FileShar
 
 
 def init_app(password: str, config: dict[str, Any]) -> FileShareApp:
+    """
+    Function to initialize the app if the user already exists.
+    Args:
+        password (str): Password of the user
+        config (dict[str, Any]): Configuration dictionary
+    returns:
+        FileShareApp: FileShareApp instance
+    """
     return FileShareApp(db_instance.get_token(password), config)

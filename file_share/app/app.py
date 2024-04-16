@@ -41,6 +41,11 @@ class FileShareApp:
 
     # Helper methods for Tkinter interactions
     def get_file(self, app_window):
+        """
+        Select a file to be sent.
+        Args:
+            app_window: Tkinter window
+        """
         self.file_path = fd.askopenfilename()
         file_label = Entry(app_window)
         file_label.delete(0, END)
@@ -48,15 +53,29 @@ class FileShareApp:
         file_label.grid(row=4, column=1, sticky=EW)
 
     def set_target(self, friend):
+        """
+        Set target user for file transfer.
+        Args:
+            friend: username of the target user
+        """
         self.target_field.delete(0, END)
         self.target_field.insert(0, friend)
 
-    # Takes regular file and prepares it to be sent via the app
     def prepare_file(self, file_path, target):
+        """
+        Prepare a file to be sent via the app.
+        Args:
+            file_path: path to the file
+            target: username of the target user
+        """
         return load_file(file_path, target)
 
-    # Get list of friends from db and insert it into a listbox
     def show_friends(self):
+        """
+        Show a list of friends in a new window.
+        Args:
+            None
+        """
         top = Tk()
         friends_listbox = Listbox(top, width=50)
         friends = self.list_friends()
@@ -67,8 +86,12 @@ class FileShareApp:
         friends_listbox.pack()
         top.mainloop()
 
-    # Gets currently selected file from a listbox
     def get_selected_file_from_listbox(self, ListBox):
+        """
+        Retrieves the currently selected file from a listbox.
+        Args:
+            ListBox: Tkinter listbox
+        """
         get_selected_file = ListBox.get(ACTIVE)
         # Make sure to always just use the database file index, since file might have a different index in the files list, listbox and db
         selected_file_index = re.search("\d+", get_selected_file).group(0)
@@ -81,6 +104,11 @@ class FileShareApp:
 
     # Pulls the outgoing queue from the db and inserts it into a listbox, currently also testing file saving from queue here
     def show_outgoing_queue(self):
+        """
+        Takes the outgoing queue from the database and inserts it into a listbox.
+        Args:
+            None
+        """
         top = Tk()
         outgoing_listbox = Listbox(top, width=50)
         files = self.list_outgoing_queue()
@@ -91,13 +119,20 @@ class FileShareApp:
         outgoing_listbox.pack()
         top.mainloop()
 
-    # Lists incoming queue, with the options to either save all the files, save a specific one, or to remote a file
     def show_incoming_queue(self):
+        """
+        Show the incoming queue in a new window where the user can save files, ignore them or save all.
+        Args:
+            None
+        """
         top = Tk()
         incoming_listbox = Listbox(top, selectmode=SINGLE, width=50)
         incoming_listbox.pack()
 
         def update_list():
+            """
+            Updates the list of incoming files.
+            """
             files = self.list_incoming_queue()
             incoming_listbox.delete(0, END)
             for file in files:
@@ -145,6 +180,11 @@ class FileShareApp:
         top.mainloop()
 
     def show_non_friends(self):
+        """
+        Shows a list of non-friends who are reacheable by the app and allows user to to add them asi friends.
+        Args:
+            None
+        """
         top = Tk()
         befriend_button = Button(
             top,
@@ -162,12 +202,20 @@ class FileShareApp:
         top.mainloop()
 
     def get_own_fingerprint(self):
+        """
+        Show logged in user's fingerprint.
+        """
         top = Tk()
         fingerprint = self.get_my_fingerprint()
         finger_label = Label(top, text=fingerprint)
         finger_label.pack()
 
     def get_friends_fingerprint(self, name):
+        """
+        Show a friend's fingerprint.
+        Args:
+            name: username of the friend
+        """
         top = Tk()
         fingerprint = self.get_user_fingerprint(username=name)
         print(fingerprint)
@@ -175,6 +223,11 @@ class FileShareApp:
         fingerprint_label.pack()
 
     def get_all_users(self):
+        """
+        Return all users who are reachable whetever they are in friends or not
+        Args:
+            None
+        """
         friends = self.list_friends()
         non_friends = self.list_non_friends()
         return friends + non_friends
@@ -349,16 +402,25 @@ class FileShareApp:
         return self.database.get_all_files(False)
 
     def save_file_from_queue(self, file: Files, path: Union[str, Path]):  # Implemented
-        """Save an incoming file."""
+        """
+        Save an incoming file.
+        Args:
+            file: File to be saved
+            path: Path where the file will be saved
+        """
         try:
             decrypted_file = self.database.decrypt_file(file.idx, self.token)
             decrypted_file.save(path)
             self.database.remove_file_from_queue(file.idx)
         except OSError as e:
-            print(f"File {file.filename} could not be saved.", e)
+            print(f"File {file.filenaKRYTex/main.texme} could not be saved.", e)
 
     def save_all_files_from_queue(self, path: Union[str, Path]):  # Implemented
-        """Save all files in the queue to the specified location."""
+        """
+        Save all files in the queue to the specified location.
+        Args:
+            path: Path where the files will be saved
+        """
         if isinstance(path, str):
             path = Path(path)
         if not path.is_dir():
@@ -367,7 +429,11 @@ class FileShareApp:
             self.save_file_from_queue(file, path)
 
     def ignore_incoming_file(self, file: Files) -> bool:  # Implemented
-        """Ignore a file that is incoming and remove it from the database."""
+        """
+        Ignore a file that is incoming and remove it from the database.
+        Args:
+            file: File to be ignored
+        """
         if not file.incoming:
             return False
         self.database.remove_file_from_queue(idx=file.idx)
@@ -389,8 +455,9 @@ class FileShareApp:
         """
         Check if the user with this IP uses this protocol.
         This person will be added to the known users (not friends yet).
-
-        returns username on success, None otherwise
+        Args:
+            ip_address: IP address to check
+        returns: username on success, None otherwise
         """
         try:
             asyncio.run(send_cert(ip_address, self.database))
