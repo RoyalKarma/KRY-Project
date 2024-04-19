@@ -1,0 +1,52 @@
+\section{Application structure}
+{\small
+%
+\dirtree{%.
+.1 KRY-Project.
+.2 file\_share.
+.3 app \DTcomment{Core methods of the application}.
+.4 \_\_init\_\_.py.
+.4 app.py.
+.4 init\_app.py.
+.4 test\_send\_file.py.
+.3 database \DTcomment{Definitions of all database tables}.
+.4 \_\_init\_\_.py.
+.4 base.py.
+.4 files.py.
+.4 keys.py.
+.4 me.py.
+.4 users.py.
+.3 definitions.
+.4 \_\_init\_\_.py.
+.4 dataclasses.py.
+.4 enum.py.
+.4 procedures.py.
+.3 friend\_finder \DTcomment{Methods to discover and work with users on the network}.
+.4 \_\_init\_\_.py.
+.4 ping\_em.py.
+.3 receiver \DTcomment{Endpoint definitons enabling data reception with authentication}.
+.4 \_\_init\_\_.py.
+.4 api\_keys.py.
+.4 get\_ip.py.
+.4 receiver\_api.py.
+.3 sender \DTcomment{Methods to send files and work with queue}.
+.4 \_\_init\_\_.py.
+.4 sender.py.
+.4 ssl\_context.py.
+.3 \_\_init\_\_.py.
+.2 main.py.
+.2 pdm.lock \DTcomment{Package data}.
+.2 pyproject.toml \DTcomment{Basic configuration file}.
+.2 README.md.
+.2 testfile.txt.
+}
+}
+
+\newpage
+\section{Conclusion}
+This project set out to create a GUI controlled application that enables a secure Peer-to-Peer file transfer on a public network in two modes:
+\begin{itemize}
+    \item Real-time transmission -- both users are online and the transmission is immediate
+    \item Delayed transmission -- the receiving user is offline so the transmission is stored in a~secured storage waiting to be sent once the user becomes available
+\end{itemize}
+All of the aforementioned goals were achieved using the Python programming language.
